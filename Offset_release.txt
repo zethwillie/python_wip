@@ -1,0 +1,40 @@
+{
+string $select[]=`ls -sl`;
+string $allAttr[] = `listAttr -k -v $select`;
+string $objAttrName[];
+string $secondKeyableAttr[];
+float $secondAttrValue[];
+float $result[];
+float $time[]= `keyframe -q -at`;
+float $secondAttBuffer[];
+$time = `sort $time`;
+clear $objAttrName;
+clear $secondAttrValue;
+for ($h=0; $h<size($select); $h++)
+{
+$secondKeyableAttr = `listAttr -k -v $select[$h]`;
+for ($i=0; $i< size ($secondKeyableAttr); $i++)
+{
+$secondAttBuffer[$i] = `getAttr ($select[$h] + "." + $secondKeyableAttr[$i])`;
+$secondAttrValue[size($secondAttrValue)]=$secondAttBuffer[$i];
+$objAttrName[size ($objAttrName)] = ($select[$h]+"."+$secondKeyableAttr[$i]);
+}
+}
+if (size ($time)==0)
+{
+for ($j=0; $j< size ($allAttr); $j++)
+{
+$result[$j] = -1*($attrValue[$j]-$secondAttrValue[$j]);
+keyframe -animation objects -relative -valueChange (0 + $result[$j]) $objAttrName[$j];
+}
+}
+else
+{
+for ($j=0; $j< size ($allAttr); $j++)
+{
+$result[$j] = -1*($attrValue[$j]-$secondAttrValue[$j]);
+keyframe -animation objects -relative -t ($time[0]+":"+$time[size ($time)-1] ) -valueChange (0 + $result[$j]) $objAttrName[$j];
+}
+}
+autoKeyframe -state true;
+} 

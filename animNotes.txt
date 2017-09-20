@@ -1,6 +1,6 @@
-anim stuff
-
+zbw_animTools:
 tween machine
+Jorg stuff?
 shape scale
 key all (beneath)
 tangents
@@ -15,7 +15,6 @@ snap
 selectionCenterLoc
 softDeformers
 selectionBuffer
-shapeScale
 makeFollicle
 latticeFix (flowPath)
 morphAttr
@@ -31,7 +30,7 @@ delay
 continue anim (extends last two keys to a new key at current location)
 
 
-anim tools
+zbw_anim:
 get frame range
 get list of keys:values
 get light list (chrlx funcs)

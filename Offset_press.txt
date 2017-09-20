@@ -1,0 +1,19 @@
+{
+global float $attrValue[];
+clear $attrValue;
+{
+autoKeyframe -state false;
+string $select[]=`ls -sl`;
+string $keyableAttr[];
+float $attBuffer[];
+for ($h=0; $h<size($select); $h++)
+{
+$keyableAttr = `listAttr -k -v $select[$h]`;
+for ($i=0; $i< size ($keyableAttr); $i++)
+{
+$attBuffer[$i] = `getAttr ($select[$h]+"."+$keyableAttr[$i])`;
+$attrValue[size ($attrValue)] = $attBuffer[$i];
+}
+}
+}
+} 
