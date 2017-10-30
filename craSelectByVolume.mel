@@ -1,0 +1,136 @@
+//version 03 select by max volume////////////////////////////////////////////
+//GUI by Carlos Rico Adega////////////////////////////////////////////
+
+//This "should" select all objects smaller than a specified volume.​. now using bounding box volume instead of computing polygon volume
+//First, select all objects you want to run the script on. The objects will need to be separate meshes
+
+global proc craSelectByVolume( )
+{
+	if(`window -q -exists craSelectByMaxVolumeWindow`)
+        deleteUI craSelectByMaxVolumeWindow;
+
+	window
+        -title "Select By Volume (bbox)"
+        -tlb 0 -mxb 0 -w 150 -h 60 -mnb 0 -s 1
+    craSelectByMaxVolumeWindow;
+
+    frameLayout -bgc .4 .4 .4 -lv 0 -mw 5 -mh 5;
+    columnLayout -adj 1;
+    	rowLayout -nc 4 -adj 3;
+            text -w 150 -bgc .2 .2 .2 -h 18 -l "" craCurrObjVol;
+            floatField -ed 0 -w 55 -pre 3 -v 0 craCurrObjVolumeFF;
+            nodeIconButton -h 18 -ann "Set Max Volume" -bgc .7 .2 .2 -i "trackDown.png" -c "craSetVolumes \"max\"";
+            nodeIconButton -h 18 -ann "Set Min Volume" -bgc .7 .5 .2 -i "trackDown.png" -c "craSetVolumes \"min\"";
+        setParent ..;
+        rowLayout -nc 3 -adj 1;
+            text -w 150 -bgc .2 .2 .2 -h 18 -l ("<font color=red><b> Maximum Volume</b></font>");
+            floatField -w 55 -pre 3 -v 1 craMaxVolumeFF;
+            button -h 18 -bgc .4 .8 .4 -l "Select" -c "craSelectVolumes \"max\"";
+        setParent ..;
+        rowLayout -nc 3 -adj 1;
+            text -w 150 -bgc .2 .2 .2 -h 18 -l ("<font color=orange><b> Minimum Volume</b></font>");
+            floatField -w 55 -pre 3 -v 1 craMinVolumeFF;
+            button -h 18 -bgc .4 .8 .4 -l "Select" -c "craSelectVolumes \"min\"";
+        setParent ..;
+    setParent ..;
+
+    int $jobNum = `scriptJob -event "SelectionChanged" "craGetVol" -p "craSelectByMaxVolumeWindow"`;
+
+	craGetVol;
+	window -e
+        -w 250
+        -h 55
+        -s 0
+    craSelectByMaxVolumeWindow;
+    showWindow craSelectByMaxVolumeWindow;
+}
+
+global proc craGetVol()
+{
+    //get the bounding box info of selected object
+    string $objs[] = `ls -sl`;
+    if(size($objs))
+    {
+		text -e -l ("<font color=green><b>" +$objs[0] + "</b></font>") craCurrObjVol;
+	    float $boundingBox[] = `xform -q -bb $objs[0]`;
+	    //get the X,Y,Z dimensions of bounding box
+	    float $xSize = $boundingBox[3]-$boundingBox[0]; // xmax - xmin
+	    float $ySize = $boundingBox[4]-$boundingBox[1]; // ymax - ymin
+	    float $zSize = $boundingBox[5]-$boundingBox[2]; // zmax - zmin
+	    //create variable "$bbSize" to calculate the volume of the bounding box by multiplying the 3 dimensions
+	    float $bbSize = $xSize * $ySize * $zSize;
+	    floatField -e -v $bbSize craCurrObjVolumeFF;
+	}
+}
+
+global proc craSelectByVolumeCmd( string $mode, float $volume )
+{
+	//set your max volume
+	float $volumeMax = $volume;
+	//create an array called "$objs" from all selected objects
+	string $objs[] = `ls -sl`;
+	if(!size($objs))
+		$objs = listRelatives("-p", `ls -o -type "mesh" -type "nurbsSurface"`);
+	//create an empty array called "$allBolts" for your bolts
+	string $allBolts[];
+	//clear the array, in case it has anything in it
+	clear $allBolts;
+	//for all selected items...
+	for ($node in $objs)
+	{
+		//get the bounding box info of selected object
+		float $boundingBox[] = `xform -q -bb $node`;
+		//get the X,Y,Z dimensions of bounding box
+		$xSize = $boundingBox[3]-$boundingBox[0]; // xmax - xmin
+		$ySize = $boundingBox[4]-$boundingBox[1]; // ymax - ymin
+		$zSize = $boundingBox[5]-$boundingBox[2]; // zmax - zmin
+		//create variable "$bbSize" to calculate the volume of the bounding box by multiplying the 3 dimensions
+		float $bbSize = $xSize * $ySize * $zSize;
+
+		//if the volume of the object is less than your max volume...
+		if($mode == "max")
+		{
+			if (($bbSize - 0.001) <= $volumeMax)
+		    {
+			    //add the item to your "$allBolts" array
+			    stringArrayInsertAtIndex( size($allBolts), $allBolts, $node );
+		    }
+		}
+		else if($mode == "min")
+		{
+		    if (($bbSize + 0.001) >= $volumeMax)
+		    {
+			    //add the item to your "$allBolts" array
+			    stringArrayInsertAtIndex( size($allBolts), $allBolts, $node );
+		    }
+		}
+	}
+	//deselect the last item selected
+	//select -d;
+	//select all of the items in your '$allBolts" array
+	select -r $allBolts;
+	//prints list of selected objects
+	print $allBolts;
+}
+
+global proc craSelectVolumes( string $mode )
+{
+	string $text = `text -q -l craCurrObjVol`;
+    float $vol = `floatField -q -v craCurrObjVolumeFF`;
+    string $floatField = "craMaxVolumeFF";
+    if($mode == "min")
+    	$floatField = "craMinVolumeFF";
+	craSelectByVolumeCmd $mode `floatField -q -v $floatField`;
+
+	evalDeferred -lp ("text -e -l \"" + $text + "\" craCurrObjVol;floatField -e -v " + $vol + " craCurrObjVolumeFF");
+}
+
+global proc craSetVolumes( string $mode)
+{
+	string $floatField = "craMaxVolumeFF";
+	if($mode == "min")
+    	$floatField = "craMinVolumeFF";
+	floatField -e -v `floatField -q -v craCurrObjVolumeFF` $floatField;
+}
+
+craSelectByVolume;
