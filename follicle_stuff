@@ -1,0 +1,7 @@
+num =  7.0
+double = 2.0*num
+unit = 1.0/double
+
+for x in range(1, int(double), 2):
+    value = x*unit
+    
