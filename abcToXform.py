@@ -19,7 +19,7 @@ for abc in sel:
 		# delete rotation? 
 	cmds.delete(abc)
 
-____________________
+# ____________________
 
 import maya.cmds as cmds
 
