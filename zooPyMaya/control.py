@@ -158,9 +158,9 @@ class PlaceDesc(object):
 			return Vector()
 
 		return xform( obj, q=True, ws=True, rp=True )
-	placePos = property( lambda self: self.getLocation( self.place ) )
-	alignPos = property( lambda self: self.getLocation( self.align ) )
-	pivotPos = property( lambda self: self.getLocation( self.pivot ) )
+	placePos = property(lambda self: self.get_location(self.place))
+	alignPos = property(lambda self: self.get_location(self.align))
+	pivotPos = property(lambda self: self.get_location(self.pivot))
 
 DEFAULT_PLACE_DESC = PlaceDesc()
 
